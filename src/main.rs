@@ -6,6 +6,7 @@ use std::convert::From;
 use std::fs::File;
 use std::io::prelude::*;
 
+#[derive(Debug)]
 enum StatusBarError {
     IoError(std::io::Error),
     TypeConvertError(std::num::ParseFloatError),
@@ -20,19 +21,6 @@ impl From<std::num::ParseFloatError> for StatusBarError {
         StatusBarError::TypeConvertError(error)
     }
 }
-/*
-// Allow the use of "{}" format specifier
-impl fmt::Display for StatusBarError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            StatusBarError::IoError(ref cause) => write!(f, "I/O Error: {}", cause),
-            StatusBarError::TypeConvertError(ref cause) => {
-                write!(f, "Number conversion error: {}", cause)
-            }
-        }
-    }
-}
-*/
 
 fn read_file_content(path: &str) -> Result<String, StatusBarError> {
     let mut contents = String::new();
@@ -49,8 +37,11 @@ fn read_file_to_num(path: &str) -> Result<f64, StatusBarError> {
 }
 
 fn get_bat_percent() -> Result<f64, StatusBarError> {
-    let bat_max = read_file_to_num("/sys/class/power_supply/BAT0/energy_full")?;
-    let bat_now = read_file_to_num("/sys/class/power_supply/BAT0/energy_now")?;
+    let bat_max =  read_file_to_num("/sys/class/power_supply/BAT0/energy_full")
+        .or_else(|_| read_file_to_num("/sys/class/power_supply/BAT0/charge_full"))?;
+
+    let bat_now = read_file_to_num("/sys/class/power_supply/BAT0/energy_now")
+        .or_else(|_| read_file_to_num("/sys/class/power_supply/BAT0/charge_now"))?;
     Ok((bat_now / bat_max) * 100.0)
 }
 
@@ -69,17 +60,17 @@ fn get_cpu_temperature() -> Result<f64, StatusBarError> {
 }
 
 fn main() {
-    let temp = match get_cpu_temperature(){
+    let temp = match get_cpu_temperature() {
         Ok(t) => t,
-        Err(_) => -1.0
+        Err(_) => -1.0,
     };
     let bat_status = match get_bat_status() {
-         Ok(s)=> s,
-         Err(_)=> "NA".to_string()
+        Ok(s) => s,
+        Err(_) => "NA".to_string(),
     };
     let bat_percent = match get_bat_percent() {
-         Ok(p)=> p,
-         Err(_)=> -1.0
+        Ok(p) => p,
+        Err(_) => -1.0,
     };
     println!(
         " {} | {}: {} | {}",
