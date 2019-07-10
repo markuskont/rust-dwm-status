@@ -58,15 +58,19 @@ fn get_cpu_temperature() -> Result<f64, StatusBarError> {
     Ok(raw / 1000.0)
 }
 
-fn fmt_cpu() -> String {
+fn fmt_cpu() -> Option<String> {
     let temp = match get_cpu_temperature() {
         Ok(t) => t,
         Err(_) => -1.0,
     };
-    format!("CPU: {:.*}C", 0, temp)
+    if temp < 0.0 {
+        None
+    } else {
+        Some(format!("CPU: {:.*}C", 0, temp))
+    }
 }
 
-fn fmt_bat() -> String {
+fn fmt_bat() -> Option<String> {
     let bat_status = match get_bat_status() {
         Ok(s) => s,
         Err(_) => "NA".to_string(),
@@ -75,13 +79,25 @@ fn fmt_bat() -> String {
         Ok(p) => p,
         Err(_) => -1.0,
     };
-    format!("{}: {:.*}%", bat_status, 2, bat_percent)
+    Some(format!("{}: {:.*}%", bat_status, 2, bat_percent))
 }
 
-fn fmt_time() -> String {
-    Local::now().format("%Y-%m-%d %H:%M:%S %z").to_string()
+fn fmt_time() -> Option<String> {
+    Some(Local::now().format("%Y-%m-%d %H:%M:%S %z").to_string())
+}
+
+fn fmt_bar() -> String {
+    let functions: Vec<fn() -> Option<String>> = vec![fmt_cpu, fmt_bat, fmt_time];
+    let mut formatted: Vec<String> = vec![];
+    for output in functions {
+        match output() {
+            Some(val) => formatted.push(val),
+            None => continue,
+        };
+    }
+    formatted.join(" | ")
 }
 
 fn main() {
-    println!(" {} | {} | {}", fmt_cpu(), fmt_bat(), fmt_time());
+    println!(" {} ", fmt_bar());
 }
