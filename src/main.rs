@@ -2,7 +2,6 @@ extern crate chrono;
 
 use chrono::Local;
 use std::convert::From;
-//use std::fmt;
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -37,7 +36,7 @@ fn read_file_to_num(path: &str) -> Result<f64, StatusBarError> {
 }
 
 fn get_bat_percent() -> Result<f64, StatusBarError> {
-    let bat_max =  read_file_to_num("/sys/class/power_supply/BAT0/energy_full")
+    let bat_max = read_file_to_num("/sys/class/power_supply/BAT0/energy_full")
         .or_else(|_| read_file_to_num("/sys/class/power_supply/BAT0/charge_full"))?;
 
     let bat_now = read_file_to_num("/sys/class/power_supply/BAT0/energy_now")
@@ -59,7 +58,7 @@ fn get_cpu_temperature() -> Result<f64, StatusBarError> {
     Ok(raw / 1000.0)
 }
 
-fn fmt_cpu() ->  String {
+fn fmt_cpu() -> String {
     let temp = match get_cpu_temperature() {
         Ok(t) => t,
         Err(_) => -1.0,
@@ -79,15 +78,10 @@ fn fmt_bat() -> String {
     format!("{}: {:.*}%", bat_status, 2, bat_percent)
 }
 
-fn fmt_time() ->  String {
+fn fmt_time() -> String {
     Local::now().format("%Y-%m-%d %H:%M:%S %z").to_string()
 }
 
 fn main() {
-    println!(
-        " {} | {} | {}",
-        fmt_cpu(),
-        fmt_bat(),
-        fmt_time()
-    );
+    println!(" {} | {} | {}", fmt_cpu(), fmt_bat(), fmt_time());
 }
