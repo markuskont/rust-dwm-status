@@ -59,11 +59,15 @@ fn get_cpu_temperature() -> Result<f64, StatusBarError> {
     Ok(raw / 1000.0)
 }
 
-fn main() {
+fn fmt_cpu() ->  String {
     let temp = match get_cpu_temperature() {
         Ok(t) => t,
         Err(_) => -1.0,
     };
+    format!("CPU: {:.*}C", 0, temp)
+}
+
+fn fmt_bat() -> String {
     let bat_status = match get_bat_status() {
         Ok(s) => s,
         Err(_) => "NA".to_string(),
@@ -72,11 +76,18 @@ fn main() {
         Ok(p) => p,
         Err(_) => -1.0,
     };
+    format!("{}: {:.*}%", bat_status, 2, bat_percent)
+}
+
+fn fmt_time() ->  String {
+    Local::now().format("%Y-%m-%d %H:%M:%S %z").to_string()
+}
+
+fn main() {
     println!(
-        " {} | {}: {} | {}",
-        format!("CPU: {:.*}C", 0, temp),
-        bat_status,
-        format!("{:.*}%", 2, bat_percent),
-        Local::now().format("%Y-%m-%d %H:%M:%S %z")
+        " {} | {} | {}",
+        fmt_cpu(),
+        fmt_bat(),
+        fmt_time()
     );
 }
